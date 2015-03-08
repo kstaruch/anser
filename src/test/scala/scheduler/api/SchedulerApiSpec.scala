@@ -7,6 +7,7 @@ import akka.http.testkit.ScalatestRouteTest
 import org.scalatest.{FlatSpec, Matchers}
 import scheduler.api.ApiMessages.Message
 import scheduler.services.ApplicationsService.GetAllApplicationsResponse
+import scheduler.services.EventsService.GetAllEventsResponse
 
 class SchedulerApiSpec extends FlatSpec with Matchers with ScalatestRouteTest with SchedulerRoutes with Core with SchedulerProtocols {
   //def actorRefFactory = system
@@ -52,5 +53,12 @@ class SchedulerApiSpec extends FlatSpec with Matchers with ScalatestRouteTest wi
           status should be (OK)
           responseAs[String] should be ("Alive")
         }
+  }
+
+  it should "GET 'scheduler/api/applications/XXX/events' endpoint with list of events for XXX" in {
+      Get(s"/scheduler/api/applications/XXX/events") ~> routes ~> check {
+        status should be (OK)
+        responseAs[GetAllEventsResponse].events.filter(e => e.applicationId == "XXX") should have length 2
+      }
   }
 }

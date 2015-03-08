@@ -2,7 +2,7 @@ package scheduler.services
 
 import akka.actor.{Props, Actor, ActorLogging}
 import scheduler.services.ApplicationsService.ApplicationId
-import scheduler.services.EventsService.{EventInfo, GetAllEventsResponse, GetAll}
+import scheduler.services.EventsService.{GetAllEvents, EventInfo, GetAllEventsResponse}
 
 object EventsService {
 
@@ -10,15 +10,15 @@ object EventsService {
 
   def props() = Props(classOf[EventsServiceImpl])
 
-  case object GetAll
+  case class GetAllEvents(applicationId: ApplicationId)
   case class GetAllEventsResponse(events: Seq[EventInfo])
   case class EventInfo(applicationId: ApplicationId, info: String)
 }
 
 class EventsService extends Actor with ActorLogging{
   override def receive: Receive = {
-    case GetAll => sender ! GetAllEventsResponse(
-      EventInfo("application 1", "some event info") :: EventInfo("application 2", "some event info") :: Nil
+    case GetAllEvents(applicationId) => sender ! GetAllEventsResponse(
+      EventInfo(applicationId, "some event info") :: EventInfo(applicationId, "some event info") :: Nil
     );
   }
 }
