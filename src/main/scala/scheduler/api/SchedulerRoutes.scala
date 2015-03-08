@@ -10,6 +10,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.Config
 import scheduler.api.ApiMessages.Message
+import scheduler.services.ApplicationsService.{GetAllApplicationsResponse, GetAll}
 import scheduler.services.IsAliveActor.IsAlive
 
 import scala.concurrent.duration._
@@ -31,7 +32,19 @@ trait SchedulerRoutes extends SchedulerProtocols with SchedulerActors with Servi
         path(Segment / "isalive") {
           (serviceId) =>
             get {
-              withService(serviceId) { service => handleIsAlive(service) }
+              withService(serviceId) { service => handleIsAlive(service)}
+            }
+        } ~
+        path("applications" / Segment / Segment / "isalive") {
+          (applicationId, serviceId) =>
+            get {
+              withService(serviceId) { service => handleIsAlive(service)}
+            }
+        } ~
+        path(Segment) {
+          (serviceId) =>
+            get {
+              withService(serviceId) { service => handleGetAll(service) }
             }
         }
       }
@@ -40,6 +53,18 @@ trait SchedulerRoutes extends SchedulerProtocols with SchedulerActors with Servi
 
   def handleIsAlive(service: ActorRef): Route = {
     val future = (service ? IsAlive).mapTo[String]
+
+    onComplete(future) {
+      case Success(result) =>
+        complete(result)
+      case Failure(e) =>
+        logger.error(s"Error: ${e.toString}")
+        complete(InternalServerError -> Message(ApiMessages.UnknownException))
+    }
+  }
+
+  def handleGetAll(service: ActorRef): Route = {
+    val future = (service ? GetAll).mapTo[GetAllApplicationsResponse]
 
     onComplete(future) {
       case Success(result) =>

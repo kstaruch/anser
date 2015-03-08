@@ -1,11 +1,12 @@
 package scheduler.api
 
 import akka.event.NoLogging
+import akka.http.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.model.StatusCodes._
 import akka.http.testkit.ScalatestRouteTest
-import org.scalatest.{Matchers, FlatSpec}
-import akka.http.marshallers.sprayjson.SprayJsonSupport._
+import org.scalatest.{FlatSpec, Matchers}
 import scheduler.api.ApiMessages.Message
+import scheduler.services.ApplicationsService.GetAllApplicationsResponse
 
 class SchedulerApiSpec extends FlatSpec with Matchers with ScalatestRouteTest with SchedulerRoutes with Core with SchedulerProtocols {
   //def actorRefFactory = system
@@ -37,5 +38,19 @@ class SchedulerApiSpec extends FlatSpec with Matchers with ScalatestRouteTest wi
       status should be (BadRequest)
       responseAs[Message].message should include (ApiMessages.UnsupportedService)
     }
+  }
+
+  it should "GET 'scheduler/api/applications' endpoint with list of applications" in {
+    Get(s"/scheduler/api/applications") ~> routes ~> check {
+      status should be (OK)
+      responseAs[GetAllApplicationsResponse].applications should have length 2
+    }
+  }
+
+  it should "complete 'scheduler/applications/XXX/events/isalive' endpoint" in {
+        Get(s"/scheduler/api/applications/XXX/events/isalive") ~> routes ~> check {
+          status should be (OK)
+          responseAs[String] should be ("Alive")
+        }
   }
 }
