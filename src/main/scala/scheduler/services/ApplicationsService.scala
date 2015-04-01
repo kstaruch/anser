@@ -1,7 +1,7 @@
 package scheduler.services
 
 import akka.actor.{Actor, ActorLogging, Props}
-import scheduler.services.ApplicationsService.{ApplicationInfo, GetAll, GetAllApplicationsResponse}
+import scheduler.services.ApplicationsService.{AddApplication, ApplicationInfo, GetAll, GetAllApplicationsResponse}
 
 object ApplicationsService {
   type ApplicationId = String
@@ -17,12 +17,15 @@ object ApplicationsService {
   case class GetAllApplicationsResponse(applications: Seq[ApplicationInfo])
 
   case class ApplicationInfo(id: ApplicationId, description: String)
+
+  case class AddApplication(applicationInfo: ApplicationInfo)
 }
 
 class ApplicationsService extends Actor with ActorLogging {
   override def receive: Receive = {
     case GetAll => sender ! GetAllApplicationsResponse(
       ApplicationInfo("application1", "application 1 description")
-        :: ApplicationInfo("application2", "application 2 description") :: Nil);
+        :: ApplicationInfo("application2", "application 2 description") :: Nil)
+    case AddApplication(info) => sender ! "asdasdads"
   }
 }

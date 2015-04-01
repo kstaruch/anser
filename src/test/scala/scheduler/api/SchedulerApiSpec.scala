@@ -2,11 +2,12 @@ package scheduler.api
 
 import akka.event.NoLogging
 import akka.http.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.model.HttpHeader
 import akka.http.model.StatusCodes._
 import akka.http.testkit.ScalatestRouteTest
 import org.scalatest.{FlatSpec, Matchers}
 import scheduler.api.ApiMessages.Message
-import scheduler.services.ApplicationsService.GetAllApplicationsResponse
+import scheduler.services.ApplicationsService.{ApplicationInfo, GetAllApplicationsResponse}
 import scheduler.services.EventsService.GetAllEventsResponse
 
 class SchedulerApiSpec extends FlatSpec with Matchers with ScalatestRouteTest with SchedulerRoutes with Core with SchedulerProtocols {
@@ -60,5 +61,13 @@ class SchedulerApiSpec extends FlatSpec with Matchers with ScalatestRouteTest wi
         status should be (OK)
         responseAs[GetAllEventsResponse].events.filter(e => e.applicationId == "XXX") should have length 2
       }
+  }
+
+  it should "complete POST to 'scheduler/api/applications/' with 201 and location when valid data provided" in {
+    Post(s"/scheduler/api/applications", ApplicationInfo("XXX", "XXX description")) ~> routes ~> check {
+      status should be (Created)
+      val loc = header("location")
+      loc should be (defined)
+    }
   }
 }

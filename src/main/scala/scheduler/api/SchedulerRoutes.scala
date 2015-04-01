@@ -3,16 +3,24 @@ package scheduler.api
 import akka.actor.ActorRef
 import akka.event.LoggingAdapter
 import akka.http.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.marshalling.ToResponseMarshallable
+import akka.http.model.HttpHeader
+import akka.http.model.StatusCodes._
 import akka.http.server.Directives._
 import akka.http.server.Route
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.Config
-import scheduler.services.ApplicationsService.{ApplicationId, GetAll, GetAllApplicationsResponse}
+import scheduler.api.ApiMessages.Message
+import scheduler.services.ApplicationsService
+import scheduler.services.ApplicationsService._
 import scheduler.services.EventsService.{GetAllEvents, GetAllEventsResponse}
 import scheduler.services.IsAliveActor.IsAlive
 
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
+import akka.http.model.headers._
+import akka.http.model._
 
 /*
 Scheduler api
@@ -53,6 +61,14 @@ trait SchedulerRoutes extends SchedulerProtocols with SchedulerActors with Servi
               withService("events") { service => handleGetAllEvents(service, applicationId)}
             }
         } ~
+        path("applications") {
+          (post & entity(as[ApplicationInfo])) { applicationInfo =>
+            extractUri { (uri) =>
+            respondWithHeader(Location(uri.withPath(Uri.Path("/applications")))) {
+              withService("applications") { service => handleAddApplication(service, applicationInfo) }
+            }           }
+           }
+        } ~
         path(Segment) {
           (serviceId) =>
             get {
@@ -61,6 +77,10 @@ trait SchedulerRoutes extends SchedulerProtocols with SchedulerActors with Servi
         }
       }
     }
+  }
+
+  def handleAddApplication(service: ActorRef, info: ApplicationInfo): Route = {
+    createCreatedResponse((service ? AddApplication(info)).mapTo[String])
   }
 
   def handleIsAlive(service: ActorRef): Route = {

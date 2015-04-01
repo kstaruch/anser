@@ -15,11 +15,21 @@ trait ResponseFactory extends SchedulerProtocols {
   this: Core =>
 
   implicit val logger: LoggingAdapter
-
+                                                                                1
   def createResponse[T](eventualResponse: Future[T])(implicit marshaller: T => ToResponseMarshallable): Route = {
     onComplete(eventualResponse) {
       case Success(result) =>
         complete(result)
+      case Failure(e) =>
+        logger.error(s"Error: ${e.toString}")
+        complete(ToResponseMarshallable(InternalServerError -> Message(ApiMessages.UnknownException)))
+    }
+  }
+
+  def createCreatedResponse[T](eventualResponse: Future[T])(implicit marshaller: T => ToResponseMarshallable): Route = {
+    onComplete(eventualResponse) {
+      case Success(result) =>
+        complete(ToResponseMarshallable(Created -> Message(result.toString)))
       case Failure(e) =>
         logger.error(s"Error: ${e.toString}")
         complete(ToResponseMarshallable(InternalServerError -> Message(ApiMessages.UnknownException)))
