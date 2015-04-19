@@ -2,13 +2,14 @@ package scheduler.api
 
 import akka.event.NoLogging
 import akka.http.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.model.HttpHeader
+import akka.http.model.{Uri, HttpHeader}
 import akka.http.model.StatusCodes._
 import akka.http.testkit.ScalatestRouteTest
 import org.scalatest.{FlatSpec, Matchers}
 import scheduler.api.ApiMessages.Message
 import scheduler.services.ApplicationsService.{ApplicationInfo, GetAllApplicationsResponse}
 import scheduler.services.EventsService.GetAllEventsResponse
+import akka.http.model.headers._
 
 class SchedulerApiSpec extends FlatSpec with Matchers with ScalatestRouteTest with SchedulerRoutes with Core with SchedulerProtocols {
   //def actorRefFactory = system
@@ -18,6 +19,7 @@ class SchedulerApiSpec extends FlatSpec with Matchers with ScalatestRouteTest wi
 
   override val logger = NoLogging
 
+  implicit val defaultHostInfo = DefaultHostInfo(Host("myhost.com"), false)
 
   behavior of "Scheduler API"
 
@@ -65,9 +67,10 @@ class SchedulerApiSpec extends FlatSpec with Matchers with ScalatestRouteTest wi
 
   it should "complete POST to 'scheduler/api/applications/' with 201 and location when valid data provided" in {
     Post(s"/scheduler/api/applications", ApplicationInfo("XXX", "XXX description")) ~> routes ~> check {
+      val expected = Some(Location(Uri(s"http://${defaultHostInfo.host.host.address()}/applications/XXX")))
+      //Some(Location: http://myhost.com/applications/XXX)
       status should be (Created)
-      val loc = header("location")
-      loc should be (defined)
+      header("location") should be (expected)
     }
   }
 }

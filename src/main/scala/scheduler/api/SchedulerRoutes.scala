@@ -8,6 +8,7 @@ import akka.http.model.HttpHeader
 import akka.http.model.StatusCodes._
 import akka.http.server.Directives._
 import akka.http.server.Route
+import akka.http.server.directives.BasicDirectives
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -62,11 +63,10 @@ trait SchedulerRoutes extends SchedulerProtocols with SchedulerActors with Servi
             }
         } ~
         path("applications") {
-          (post & entity(as[ApplicationInfo])) { applicationInfo =>
-            extractUri { (uri) =>
-            respondWithHeader(Location(uri.withPath(Uri.Path("/applications")))) {
+          (post & entity(as[ApplicationInfo]) & extractUri) {
+            (applicationInfo, uri) => respondWithHeader(Location(uri.withPath(Uri.Path("/applications/" + applicationInfo.id )))) {
               withService("applications") { service => handleAddApplication(service, applicationInfo) }
-            }           }
+            }
            }
         } ~
         path(Segment) {
