@@ -15,7 +15,7 @@ trait ResponseFactory extends SchedulerProtocols {
   this: Core =>
 
   implicit val logger: LoggingAdapter
-                                                                                1
+
   def createResponse[T](eventualResponse: Future[T])(implicit marshaller: T => ToResponseMarshallable): Route = {
     onComplete(eventualResponse) {
       case Success(result) =>
